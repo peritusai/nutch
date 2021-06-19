@@ -284,7 +284,16 @@ public class HttpWebClient {
 
       String innerHtml = driver.findElement(By.tagName("body"))
           .getAttribute("innerHTML");
-      return innerHtml;
+
+      //While innerHTML will get all the content that is vieweable on the page, this is causing the
+      // title to be lost. Also, can't get the body because that may also get the non-java script
+      // rendered content. So, instead, just get the title from the driver and add it explicitly.
+      String title = driver.getTitle();
+      title = (title == null) ? "" : title;
+      String pageSourceWithTitle = "<html><title>" + title + "</title>\n<body>" + innerHtml +
+          "\n</body></html>";
+
+      return pageSourceWithTitle;
 
       // I'm sure this catch statement is a code smell ; borrowing it from
       // lib-htmlunit
