@@ -284,7 +284,19 @@ public class HttpWebClient {
 
       String innerHtml = driver.findElement(By.tagName("body"))
           .getAttribute("innerHTML");
-      return innerHtml;
+
+      // While innerHTML will get all the content that is vieweable on the page, the page
+      // title is lost.
+      // The HtmlParser looks for the first title tag to extract the page title.
+      // Adding that from the driver and constructing a minimal page content around the
+      // innerHTML would enable HtmlParser to extract the page title.
+      String title = driver.getTitle();
+      title = (title == null) ? "" : title;
+      String pageSourceWithTitle =
+          "<html><head><title>" + title + "</title></head><body>" + innerHtml +
+              "</body></html>";
+
+      return pageSourceWithTitle;
 
       // I'm sure this catch statement is a code smell ; borrowing it from
       // lib-htmlunit
