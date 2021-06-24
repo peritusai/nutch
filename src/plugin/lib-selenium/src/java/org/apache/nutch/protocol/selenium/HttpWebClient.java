@@ -282,8 +282,27 @@ public class HttpWebClient {
         takeScreenshot(driver, conf);
       }
 
-      String innerHtml = driver.findElement(By.tagName("body"))
-          .getAttribute("innerHTML");
+      String innerHtml = null;
+      String prevInnerHtml = null;
+      int MAX_ATTEMPTS_WAIT_PAGE_LOAD = 5;
+
+      long pageLoadWait = conf.getLong("page.load.delay", 3);
+      // For some websites that have some animation during load, the seleniumPage load wait
+      // doesnt quite wait. This is a brute force wayo to divide the timeout period into
+      // 5 intervals, and check if the content is any different across consecutive intervals.
+      // If it is different, the page is likely still doing some animation/loading, so
+      // wait a little longer. The selenium recommended way here (which is targeted towards
+      // developers of tests is to wait for a certain element to appear, however, that approach
+      // cant work in a nutch like crawler that should work for any website.
+      for(int attempts = 0; attempts < MAX_ATTEMPTS_WAIT_PAGE_LOAD; attempts++) {
+        innerHtml = driver.findElement(By.tagName("body"))
+            .getAttribute("innerHTML");
+        if (prevInnerHtml != null && prevInnerHtml.equals(innerHtml)) {
+          break;
+        }
+        prevInnerHtml = innerHtml;
+        Thread.sleep(pageLoadWait*1000/MAX_ATTEMPTS_WAIT_PAGE_LOAD);
+      }
 
       // While innerHTML will get all the content that is vieweable on the page, the page
       // title is lost.
